@@ -1,0 +1,12 @@
+{
+  "Plugin-Class": "ru.stash.hunter.StashHunterPlugin",
+  "Name": "StashHunter",
+  "Version": "${plugin_version}",
+  "Description": "Stash hunter",
+  "Authors": [
+    "_Churka_/9h4ck"
+  ],
+  "Minecraft-Versions": [
+    "1.20.4"
+  ]
+}
