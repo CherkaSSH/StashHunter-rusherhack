@@ -5,13 +5,10 @@ import net.minecraft.world.entity.player.Player;
 import org.rusherhack.client.api.events.client.EventUpdate;
 import org.rusherhack.client.api.feature.module.ModuleCategory;
 import org.rusherhack.client.api.feature.module.ToggleableModule;
-import org.rusherhack.client.api.render.IRenderer3D;
-import org.rusherhack.client.api.setting.ColorSetting;
 import org.rusherhack.core.event.subscribe.Subscribe;
 import org.rusherhack.core.setting.BooleanSetting;
 import org.rusherhack.core.setting.NumberSetting;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,12 +45,11 @@ public class StashHunterModule extends ToggleableModule {
             cen = mc.player.blockPosition();
         }
         if (mc.player!=null && active.getValue() && cen!=null){
-            List<BlockPos> kek = blocks(radius.getValue());
+            List<BlockPos> kek = blocks(gap.getValue()*16);
             lookXZ(kek.get(i));
-            getNotificationManager().chat("going to "+kek.get(i));
-            if(disxz2block(kek.get(i))<=5&&i!=radius.getValue()*4+2){
+            if(distxz2block(kek.get(i))<=5&&i!=radius.getValue()*4+2){
                 i++;
-            } else if((i >= kek.size())) {
+            } else if((i >= kek.size()-1)) {
                 active.setValue(false);
                 getNotificationManager().chat("Done");
             }
@@ -66,19 +62,13 @@ public class StashHunterModule extends ToggleableModule {
     }
 
     private ArrayList<BlockPos> blocks(int gap){
-        ArrayList<BlockPos> blockies= new ArrayList<>();
-        //doing 1st circle manually cuz why not
-        blockies.add(new BlockPos(0,0,0));
-        blockies.add(new BlockPos(0,0,-1));
-        blockies.add(new BlockPos(-1,0,-1));
-        blockies.add(new BlockPos(-1,0,1));
-        blockies.add(new BlockPos(2,0,1));
-        //everything else is being done automatically
+        ArrayList<BlockPos> blockies = new ArrayList<>();
         for (int i = 2; i <= radius.getValue(); i++){
+            blockies.add(new BlockPos(i,0,i));
             blockies.add(new BlockPos(i,0,-i));
             blockies.add(new BlockPos(-i,0,-i));
             blockies.add(new BlockPos(-i,0,i));
-            blockies.add(new BlockPos(i++,0,i));
+            blockies.add(new BlockPos(i,0,i));
         }
         //add gaps
         blockies.replaceAll(blockPos -> new BlockPos(blockPos.getX()*gap,0,blockPos.getZ()*gap));
@@ -106,7 +96,7 @@ public class StashHunterModule extends ToggleableModule {
         p.setYRot((float) yaw);
     }
 
-    private double disxz2block(BlockPos b){
+    private double distxz2block(BlockPos b){
         assert mc.player != null;
         return mc.player.distanceToSqr( b.getX(),mc.player.getY(),b.getZ());
     }
