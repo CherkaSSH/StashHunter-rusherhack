@@ -5,12 +5,13 @@ import net.minecraft.world.entity.player.Player;
 import org.rusherhack.client.api.events.client.EventUpdate;
 import org.rusherhack.client.api.feature.module.ModuleCategory;
 import org.rusherhack.client.api.feature.module.ToggleableModule;
+import org.rusherhack.client.api.render.IRenderer3D;
+import org.rusherhack.client.api.setting.ColorSetting;
 import org.rusherhack.core.event.subscribe.Subscribe;
 import org.rusherhack.core.setting.BooleanSetting;
 import org.rusherhack.core.setting.NumberSetting;
 
-import java.io.IOException;
-import java.net.Socket;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,13 +24,16 @@ public class StashHunterModule extends ToggleableModule {
         registerSettings(gap, active, radius);
     }
     //setting
-    private final NumberSetting<Integer> gap = new NumberSetting<>("Gap","In blocks",128,0,1024).incremental(16);
+    private final NumberSetting<Integer> gap = new NumberSetting<>("Gap","In blocks",8,1,64);
     private final NumberSetting<Integer> radius = new NumberSetting<>("Radius","in gaps",4,1,32);
     private final BooleanSetting active = new BooleanSetting("Active",false);
+    private final BooleanSetting render = new BooleanSetting("Render",false);
+    private final ColorSetting box =new ColorSetting("Color", Color.BLUE);
+    private final BooleanSetting fill = new BooleanSetting("Fill",false);
+    private final BooleanSetting out = new BooleanSetting("Outline",true);
 
     private BlockPos cen;
     private int i;
-
     @Override
     public void onEnable(){
         assert mc.player != null;
@@ -48,7 +52,7 @@ public class StashHunterModule extends ToggleableModule {
             cen = mc.player.blockPosition();
         }
         if (mc.player!=null && active.getValue() && cen!=null){
-            List<BlockPos> kek = blocks(radius.getValue()*16);
+            List<BlockPos> kek = blocks(radius.getValue());
             lookXZ(kek.get(i));
             getNotificationManager().chat("going to "+kek.get(i));
             if(disxz2block(kek.get(i))<=5&&i!=radius.getValue()*4+2){
@@ -63,6 +67,16 @@ public class StashHunterModule extends ToggleableModule {
         //if(mc.player.getHealth()<10 ||mc.player.getInventory().getArmor(2).getDamageValue()<20){
         //    discnnect();
         //};
+    }
+    @Subscribe
+    public void onRender(EventUpdate event){
+        IRenderer3D ren = getRenderer3D();
+        ArrayList<BlockPos> kek = blocks(radius.getValue());
+        if (render.getValue()){
+            for (int j = i; j < blocks(radius.getValue()).size()-i-1; j++) {
+                ren.drawBox(kek.get(j), fill.getValue(), out.getValue(),box.getValue().getRGB());
+            }
+        }
     }
 
     private ArrayList<BlockPos> blocks(int gap){
