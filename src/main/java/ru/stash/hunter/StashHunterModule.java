@@ -80,9 +80,9 @@ public class StashHunterModule extends ToggleableModule {
     //boilerplate shit
     private void lookXZ(BlockPos b) {
         Player p = mc.player;
-        int x = (int) p.getX();
-        int y = (int) p.getY() + 1;
-        int z = (int) p.getZ();
+        double x = p.getX();
+        double y = p.getY() + 1;
+        double z = p.getZ();
         double dirx = x - b.getX();
         double diry = y - b.getY();
         double dirz = z - b.getZ();
