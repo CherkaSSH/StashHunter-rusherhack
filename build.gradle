@@ -22,8 +22,8 @@ repositories {
 		name = "rusherhack"
 		//releases repository will have the latest api version for last stable rusherhack release
 		//snapshots will always be the latest api version
-		url = "https://maven.rusherhack.org/releases"
-		//url = "https://maven.rusherhack.org/snapshots"
+		//url = "https://maven.rusherhack.org/releases"
+		url = "https://maven.rusherhack.org/snapshots"
 	}
 
 	maven {
@@ -77,7 +77,7 @@ java {
 	if (JavaVersion.current() < javaVersion) {
 		toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
 	}
-	archivesBaseName = project.archives_base_name + "-" + project.minecraft_version
+	archivesBaseName = project.archives_base_name
 }
 
 processResources {

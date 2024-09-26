@@ -21,12 +21,15 @@ public class StashHunterModule extends ToggleableModule {
         super("StashHunter","Auromatically scans territory", ModuleCategory.PLAYER);
         //settings
         registerSettings(gap, active, radius,disconnect);
+        disconnect.addSubSettings(dishealth);
     }
     //setting
     private final NumberSetting<Integer> gap = new NumberSetting<>("Gap","In blocks",8,1,64);
     private final NumberSetting<Integer> radius = new NumberSetting<>("Radius","in gaps",4,1,32);
     private final BooleanSetting active = new BooleanSetting("Active",false);
-    private final BooleanSetting disconnect = new BooleanSetting("Disconnect",false);
+
+    private final BooleanSetting disconnect = new BooleanSetting("LogOnArrival",false);
+    private final NumberSetting<Integer> dishealth = new NumberSetting<>("LogOnhealth",10,1,36).setVisibility(disconnect::getValue);
 
 
     //the varrssss
@@ -45,7 +48,8 @@ public class StashHunterModule extends ToggleableModule {
         i=1;
     }
     @Subscribe
-    public void onUpdate(EventUpdate event){
+    public void onUpdate(EventUpdate event)
+    {
         if (cen == null){
             assert mc.player != null;
             cen = mc.player.blockPosition();
@@ -58,9 +62,9 @@ public class StashHunterModule extends ToggleableModule {
             } else if((i >= kek.size()-1)) {
                 active.setValue(false);
                 getNotificationManager().chat("Done");
-                if (disconnect.getValue()) disconnect();
+                if (disconnect.getValue()||(dishealth.getValue()>mc.player.getHealth()&&disconnect.getValue())) disconnect();
             }
-            // String string = String.valueOf(chunks(radius.getValue()));
+            // String = String.valueOf(chunks(radius.getValue()));
             // getNotificationManager().chat(string);
         }
         //if(mc.player.getHealth()<10 ||mc.player.getInventory().getArmor(2).getDamageValue()<20){
@@ -68,7 +72,8 @@ public class StashHunterModule extends ToggleableModule {
         //};
     }
 
-    private ArrayList<BlockPos> blocks(int gap,int radius){
+    private ArrayList<BlockPos> blocks(int gap,int radius)
+    {
         ArrayList<BlockPos> blockies = new ArrayList<>();
         //gen offsets
         for (int i = 2; i <= radius; i++){
@@ -86,7 +91,8 @@ public class StashHunterModule extends ToggleableModule {
     }
 
     //boilerplate shit
-    private void lookXZ(BlockPos b) {
+    private void lookXZ(BlockPos b)
+    {
         Player p = mc.player;
         double x = p.getX();
         double y = p.getY() + 1;
