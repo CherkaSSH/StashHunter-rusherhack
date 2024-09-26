@@ -9,8 +9,10 @@ import org.rusherhack.core.event.subscribe.Subscribe;
 import org.rusherhack.core.setting.BooleanSetting;
 import org.rusherhack.core.setting.NumberSetting;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.rusherhack.client.api.RusherHackAPI.*;
 
@@ -18,12 +20,13 @@ public class StashHunterModule extends ToggleableModule {
     public StashHunterModule(){
         super("StashHunter","Auromatically scans territory", ModuleCategory.PLAYER);
         //settings
-        registerSettings(gap, active, radius);
+        registerSettings(gap, active, radius,disconnect);
     }
     //setting
     private final NumberSetting<Integer> gap = new NumberSetting<>("Gap","In blocks",8,1,64);
     private final NumberSetting<Integer> radius = new NumberSetting<>("Radius","in gaps",4,1,32);
     private final BooleanSetting active = new BooleanSetting("Active",false);
+    private final BooleanSetting disconnect = new BooleanSetting("Disconnect",false);
 
 
     //the varrssss
@@ -55,6 +58,7 @@ public class StashHunterModule extends ToggleableModule {
             } else if((i >= kek.size()-1)) {
                 active.setValue(false);
                 getNotificationManager().chat("Done");
+                if (disconnect.getValue()) disconnect();
             }
             // String string = String.valueOf(chunks(radius.getValue()));
             // getNotificationManager().chat(string);
@@ -105,10 +109,6 @@ public class StashHunterModule extends ToggleableModule {
         return mc.player.distanceToSqr( b.getX(),mc.player.getY(),b.getZ());
     }
 
-    //private void discnnect(){
-    //    Socket socket = new Socket();
-    //    try {
-    //        socket.close();
-    //    } catch (IOException ignored) {}
-    //}
+    private void disconnect(){
+        Objects.requireNonNull(mc.getConnection()).close();}
 }
