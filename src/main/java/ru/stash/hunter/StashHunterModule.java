@@ -25,8 +25,11 @@ public class StashHunterModule extends ToggleableModule {
     private final NumberSetting<Integer> radius = new NumberSetting<>("Radius","in gaps",4,1,32);
     private final BooleanSetting active = new BooleanSetting("Active",false);
 
-    private BlockPos cen;
-    private int i;
+
+    //the varrssss
+    List<BlockPos> kek = blocks( gap.getValue()/16, radius.getValue());
+    BlockPos cen;
+    int i;
     @Override
     public void onEnable(){
         assert mc.player != null;
@@ -44,8 +47,8 @@ public class StashHunterModule extends ToggleableModule {
             assert mc.player != null;
             cen = mc.player.blockPosition();
         }
+        if (kek==null) kek = blocks( gap.getValue()/16, radius.getValue());
         if (mc.player!=null && active.getValue() && cen!=null){
-            List<BlockPos> kek = blocks(gap.getValue()*16);
             lookXZ(kek.get(i));
             if(distxz2block(kek.get(i))<=5&&i!=radius.getValue()*4+2){
                 i++;
@@ -61,9 +64,10 @@ public class StashHunterModule extends ToggleableModule {
         //};
     }
 
-    private ArrayList<BlockPos> blocks(int gap){
+    private ArrayList<BlockPos> blocks(int gap,int radius){
         ArrayList<BlockPos> blockies = new ArrayList<>();
-        for (int i = 2; i <= radius.getValue(); i++){
+        //gen offsets
+        for (int i = 2; i <= radius; i++){
             blockies.add(new BlockPos(i,0,i));
             blockies.add(new BlockPos(i,0,-i));
             blockies.add(new BlockPos(-i,0,-i));
@@ -72,7 +76,7 @@ public class StashHunterModule extends ToggleableModule {
         }
         //add gaps
         blockies.replaceAll(blockPos -> new BlockPos(blockPos.getX()*gap,0,blockPos.getZ()*gap));
-        //center to cen
+        //center
         blockies.replaceAll(blockPos -> new BlockPos(blockPos.getX()+cen.getX(),0,blockPos.getZ()+cen.getZ()));
         return blockies;
     }
@@ -90,7 +94,7 @@ public class StashHunterModule extends ToggleableModule {
         dirx /= len;
         dirz /= len;
         double yaw = Math.atan2(dirz, dirx);
-        // to degree
+        // to mc degree
         yaw = yaw * 180.0 / Math.PI;
         yaw += 90f;
         p.setYRot((float) yaw);
