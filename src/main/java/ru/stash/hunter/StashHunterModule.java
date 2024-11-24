@@ -9,7 +9,6 @@ import org.rusherhack.core.event.subscribe.Subscribe;
 import org.rusherhack.core.setting.BooleanSetting;
 import org.rusherhack.core.setting.NumberSetting;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -17,104 +16,118 @@ import java.util.Objects;
 import static org.rusherhack.client.api.RusherHackAPI.*;
 
 public class StashHunterModule extends ToggleableModule {
-    public StashHunterModule(){
-        super("StashHunter","Auromatically scans territory", ModuleCategory.PLAYER);
-        //settings
-        registerSettings(gap, active, radius,disconnect);
+
+    private final NumberSetting<Integer> gap = new NumberSetting<>("Gap", "In blocks", 8, 1, 64);
+    private final NumberSetting<Integer> radius = new NumberSetting<>("Radius", "in gaps", 4, 1, 32);
+    private final BooleanSetting active = new BooleanSetting("Active", false);
+
+    private final BooleanSetting disconnect = new BooleanSetting("LogOnArrival", false);
+    private final NumberSetting<Integer> dishealth = new NumberSetting<>("LogOnHealth", 10, 1, 36)
+            .setVisibility(disconnect::getValue);
+
+    public StashHunterModule() {
+        super("StashHunter", "Auromatically scans territory", ModuleCategory.PLAYER);
+        registerSettings(gap, active, radius, disconnect);
         disconnect.addSubSettings(dishealth);
     }
-    //setting
-    private final NumberSetting<Integer> gap = new NumberSetting<>("Gap","In blocks",8,1,64);
-    private final NumberSetting<Integer> radius = new NumberSetting<>("Radius","in gaps",4,1,32);
-    private final BooleanSetting active = new BooleanSetting("Active",false);
 
-    private final BooleanSetting disconnect = new BooleanSetting("LogOnArrival",false);
-    private final NumberSetting<Integer> dishealth = new NumberSetting<>("LogOnhealth",10,1,36).setVisibility(disconnect::getValue);
+    private List<BlockPos> kek;
+    private BlockPos center;
+    private int index;
 
-
-    //the varrssss
-    List<BlockPos> kek = blocks( gap.getValue()/16, radius.getValue());
-    BlockPos cen;
-    int i;
     @Override
-    public void onEnable(){
-        assert mc.player != null;
-        cen = mc.player.blockPosition();
+    public void onEnable() {
+        assert mc.player != null : "Player is null";
+        center = mc.player.blockPosition();
+        resetScan();
     }
 
     @Override
-    public void onDisable(){
-        cen=null;
-        i=1;
+    public void onDisable() {
+        center = null;
+        resetScan();
     }
+
     @Subscribe
-    public void onUpdate(EventUpdate event)
-    {
-        if (cen == null){
-            assert mc.player != null;
-            cen = mc.player.blockPosition();
+    public void onUpdate(EventUpdate event) {
+        if (center == null) {
+            assert mc.player != null : "Player is null";
+            center = mc.player.blockPosition();
         }
-        if (kek==null) kek = blocks( gap.getValue()/16, radius.getValue());
-        if (mc.player!=null && active.getValue() && cen!=null){
-            lookXZ(kek.get(i));
-            if(distxz2block(kek.get(i))<=5&&i!=radius.getValue()*4+2){
-                i++;
-            } else if((i >= kek.size()-1)) {
-                active.setValue(false);
-                getNotificationManager().chat("Done");
-                if (disconnect.getValue()||(dishealth.getValue()>mc.player.getHealth()&&disconnect.getValue())) disconnect();
-            }
-            // String = String.valueOf(chunks(radius.getValue()));
-            // getNotificationManager().chat(string);
-        }
-        //if(mc.player.getHealth()<10 ||mc.player.getInventory().getArmor(2).getDamageValue()<20){
-        //    discnnect();
-        //};
+        updateScan();
     }
 
-    private ArrayList<BlockPos> blocks(int gap,int radius)
-    {
-        ArrayList<BlockPos> blockies = new ArrayList<>();
-        //gen offsets
-        for (int i = 2; i <= radius; i++){
-            blockies.add(new BlockPos(i,0,i));
-            blockies.add(new BlockPos(i,0,-i));
-            blockies.add(new BlockPos(-i,0,-i));
-            blockies.add(new BlockPos(-i,0,i));
-            blockies.add(new BlockPos(i,0,i));
+    private void resetScan() {
+        kek = blocks(gap.getValue() / 16, radius.getValue());
+        index = 0;
+    }
+
+    private void updateScan() {
+        if (mc.player != null && active.getValue() && center != null) {
+            lookAt(kek.get(index));
+            if (distanceToBlock(kek.get(index)) <= 5 && index < kek.size()) {
+                index++;
+            } else if (index >= kek.size()) {
+                finishScan();
+            }
         }
-        //add gaps
-        blockies.replaceAll(blockPos -> new BlockPos(blockPos.getX()*gap,0,blockPos.getZ()*gap));
-        //center
-        blockies.replaceAll(blockPos -> new BlockPos(blockPos.getX()+cen.getX(),0,blockPos.getZ()+cen.getZ()));
+    }
+
+    private void finishScan() {
+        active.setValue(false);
+        getNotificationManager().chat("Done");
+        if (shouldDisconnect()) {
+            disconnect();
+        }
+    }
+
+    private boolean shouldDisconnect() {
+        return disconnect.getValue() || (mc.player.getHealth() <= dishealth.getValue() && disconnect.getValue());
+    }
+
+    private ArrayList<BlockPos> blocks(int gap, int radius) {
+        ArrayList<BlockPos> blockies = new ArrayList<>();
+        for (int i = 2; i <= radius; i++) {
+            addBlockPositions(blockies, i);
+        }
+        applyGap(blockies, gap);
+        centerBlocks(blockies);
         return blockies;
     }
 
-    //boilerplate shit
-    private void lookXZ(BlockPos b)
-    {
-        Player p = mc.player;
-        double x = p.getX();
-        double y = p.getY() + 1;
-        double z = p.getZ();
-        double dirx = x - b.getX();
-        double diry = y - b.getY();
-        double dirz = z - b.getZ();
-        double len = Math.sqrt(dirx * dirx + diry * diry + dirz * dirz);
-        dirx /= len;
-        dirz /= len;
-        double yaw = Math.atan2(dirz, dirx);
-        // to mc degree
-        yaw = yaw * 180.0 / Math.PI;
-        yaw += 90f;
-        p.setYRot((float) yaw);
+    private void addBlockPositions(ArrayList<BlockPos> blockies, int distance) {
+        blockies.add(new BlockPos(distance, 0, distance));
+        blockies.add(new BlockPos(distance, 0, -distance));
+        blockies.add(new BlockPos(-distance, 0, -distance));
+        blockies.add(new BlockPos(-distance, 0, distance));
     }
 
-    private double distxz2block(BlockPos b){
-        assert mc.player != null;
-        return mc.player.distanceToSqr( b.getX(),mc.player.getY(),b.getZ());
+    private void applyGap(ArrayList<BlockPos> blockies, int gap) {
+        blockies.replaceAll(blockPos -> new BlockPos(blockPos.getX() * gap, 0, blockPos.getZ() * gap));
     }
 
-    private void disconnect(){
-        Objects.requireNonNull(mc.getConnection()).close();}
+    private void centerBlocks(ArrayList<BlockPos> blockies) {
+        blockies.replaceAll(blockPos -> new BlockPos(blockPos.getX() + center.getX(), 0, blockPos.getZ() + center.getZ()));
+    }
+
+    private void lookAt(BlockPos block) {
+        double yaw = calculateYaw(block);
+        mc.player.setYRot((float) yaw);
+    }
+
+    private double calculateYaw(BlockPos block) {
+        Player player = mc.player;
+        double dx = block.getX() - player.getX();
+        double dz = block.getZ() - player.getZ();
+        return (float) Math.toDegrees(Math.atan2(dz, dx)) + 90f;
+    }
+
+    private double distanceToBlock(BlockPos block) {
+        assert mc.player != null : "Player is null";
+        return mc.player.distanceToSqr(block.getX(), mc.player.getY(), block.getZ());
+    }
+
+    private void disconnect() {
+        Objects.requireNonNull(mc.getConnection()).close();
+    }
 }
