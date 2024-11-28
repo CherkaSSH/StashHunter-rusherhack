@@ -82,7 +82,9 @@ public class StashHunterModule extends ToggleableModule {
     }
 
     private boolean shouldDisconnect() {
-        return disconnect.getValue() || (mc.player.getHealth() <= dishealth.getValue() && disconnect.getValue());
+        if (disconnect.getValue()) return true;
+        assert mc.player != null;
+        return mc.player.getHealth() <= dishealth.getValue() && disconnect.getValue();
     }
 
     private ArrayList<BlockPos> blocks(int gap, int radius) {
@@ -112,11 +114,13 @@ public class StashHunterModule extends ToggleableModule {
 
     private void lookAt(BlockPos block) {
         double yaw = calculateYaw(block);
+        assert mc.player != null;
         mc.player.setYRot((float) yaw);
     }
 
     private double calculateYaw(BlockPos block) {
         Player player = mc.player;
+        assert player != null;
         double dx = block.getX() - player.getX();
         double dz = block.getZ() - player.getZ();
         return (float) Math.toDegrees(Math.atan2(dz, dx)) + 90f;

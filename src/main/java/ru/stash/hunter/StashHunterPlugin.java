@@ -11,7 +11,6 @@ public class StashHunterPlugin extends Plugin{
         final StashHunterModule hunter = new StashHunterModule();
         //module
         RusherHackAPI.getModuleManager().registerFeature(hunter);
-        //command
     }
 
     @Override
